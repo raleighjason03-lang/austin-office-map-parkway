@@ -163,6 +163,10 @@
   .sales-close { border: 1px solid color-mix(in srgb, white 40%, transparent); border-radius: 999px; background: transparent; color: #fff; min-height: 2rem; padding: 0.2rem 0.7rem; }
   .sales-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--line); }
   .sales-tools .search { flex: 1; min-width: 14rem; }
+
+  .sale-filter { display: flex; align-items: center; gap: 0.35rem; color: var(--muted); font-size: 0.72rem; }
+  .sale-filter select { height: 2.25rem; border: 1px solid var(--line); border-radius: 0.65rem; background: var(--bg); padding: 0 0.4rem; color: var(--ink); }
+
   .sales-scroll { overflow: auto; flex: 1; }
   .comps { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.75rem; }
   .comps th, .comps td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0.38rem 0.5rem; text-align: left; vertical-align: top; white-space: nowrap; }
@@ -255,6 +259,10 @@
     </div>
     <div class="sales-tools">
       <label class="search"><input id="salesQ" type="search" placeholder="Filter building, city, buyer, seller" aria-label="Filter sale comps"></label>
+      <label class="sale-filter">Submarket <select id="salesSub" aria-label="Filter by submarket"><option value="">All</option><option>Austin - CBD</option><option>Austin South</option><option>Mopac North</option><option>I-35 East</option><option>Austin - Other</option></select></label>
+      <label class="sale-filter">Sold <select id="salesYear" aria-label="Filter by sale year"><option value="">Any year</option><option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option><option>2019</option><option>2018</option><option>2017</option></select></label>
+      <label class="sale-filter">Price <select id="salesPrice" aria-label="Minimum sale price"><option value="0">Any price</option><option value="10000000">$10M+</option><option value="25000000">$25M+</option><option value="50000000">$50M+</option><option value="100000000">$100M+</option><option value="200000000">$200M+</option></select></label>
+      <label class="sale-filter">Size <select id="salesSf" aria-label="Minimum property size"><option value="0">Any size</option><option value="25000">25k SF+</option><option value="50000">50k SF+</option><option value="100000">100k SF+</option><option value="200000">200k SF+</option></select></label>
       <span class="quiet" id="salesCount"></span>
     </div>
     <div class="sales-scroll"><table class="comps" id="salesTable"></table></div>
@@ -613,7 +621,18 @@ function toggleSalesSort(key) {
 }
 function renderSales() {
   const q = ($("salesQ").value || "").trim().toLowerCase();
-  let rows = DEALS.filter((d) => !q || [d.name, d.address, d.city, d.subtype, d.submarket, d.buyer, d.seller, d.lender, d.notes].join(" ").toLowerCase().includes(q));
+  const sub = $("salesSub").value;
+  const year = $("salesYear").value;
+  const minPrice = Number($("salesPrice").value) || 0;
+  const minSf = Number($("salesSf").value) || 0;
+  let rows = DEALS.filter((d) => {
+    if (sub && d.submarket !== sub) return false;
+    if (year && String(d.date || "").slice(0, 4) !== year) return false;
+    if (minPrice && (d.price || 0) < minPrice) return false;
+    if (minSf && (d.sf || 0) < minSf) return false;
+    if (!q) return true;
+    return [d.name, d.address, d.city, d.subtype, d.submarket, d.buyer, d.seller, d.lender, d.notes].join(" ").toLowerCase().includes(q);
+  });
   const sign = salesSort.dir === "asc" ? 1 : -1;
   const key = salesSort.key;
   rows = rows.slice().sort((a, b) => {
@@ -646,6 +665,10 @@ $("salesTable").addEventListener("click", (e) => { const btn = e.target.closest(
 $("openSales").onclick = () => { $("sales").hidden = false; renderSales(); };
 $("closeSales").onclick = () => { $("sales").hidden = true; };
 $("salesQ").oninput = renderSales;
+$("salesSub").onchange = renderSales;
+$("salesYear").onchange = renderSales;
+$("salesPrice").onchange = renderSales;
+$("salesSf").onchange = renderSales;
 $("sales").addEventListener("click", (e) => { if (e.target.id === "sales") $("sales").hidden = true; });
 
 addEventListener("keydown", (e) => { if (e.key === "Escape") { $("sales").hidden = true; activeId = null; $("dossier").hidden = true; renderChrome(filtered()); } });
