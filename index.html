@@ -575,7 +575,7 @@ $("closeList").onclick = () => $("rail").classList.remove("open");
 $("fitCore").onclick = () => fit("core");
 $("fitAll").onclick = () => fit("all");
 
-const DEALS = JSON.parse(document.getElementById("deals").textContent);
+const DEALS = JSON.parse(document.getElementById("deals").textContent).filter((d) => String(d.location || "").includes("Austin"));
 function dealMoney(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
 function dealRate(v) {
   if (v == null || v === "") return "—";
@@ -610,7 +610,7 @@ const DEAL_COLS = [
 function renderSales() {
   const q = ($("salesQ").value || "").trim().toLowerCase();
   const rows = DEALS.filter((d) => !q || [d.building, d.location, d.submarket, d.buyer, d.seller, d.notes, d.lender].join(" ").toLowerCase().includes(q));
-  $("salesCount").textContent = rows.length + " of " + DEALS.length + " trades";
+  $("salesCount").textContent = rows.length + " of " + DEALS.length + " Austin trades";
   const head1 = '<tr><th colspan="11">Deal</th><th class="fin" colspan="8">Financing</th></tr>';
   const head2 = "<tr>" + DEAL_COLS.map((c) => '<th class="' + (c[2] ? "fin" : "") + '">' + c[1] + "</th>").join("") + "</tr>";
   const body = rows.map((d) => {
