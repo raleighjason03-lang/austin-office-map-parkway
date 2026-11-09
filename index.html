@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Austin CBD Atlas</title>
+<title>Austin CBD</title>
 <meta name="description" content="Interactive map of Downtown Austin Class A office — rents, availability, owners, and lease comps.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@380;500;640&display=swap">
@@ -172,15 +172,30 @@
   .comps td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .comps td.notes { white-space: normal; min-width: 16rem; max-width: 24rem; }
   .comps tr.austin td { background: #e7f0ea; }
+
+  .brand-lockup { display: flex; align-items: center; gap: 0.8rem; }
+  .brand-logo { display: block; height: 1.35rem; width: auto; }
+  .fresh { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.28rem; color: var(--muted); font-size: 0.75rem; }
+  .fresh-bar { width: 4.75rem; height: 0.42rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .fresh-bar i { display: block; height: 100%; width: 100%; }
+  .fresh-bar.green i { background: #1f8a4c; }
+  .fresh-bar.yellow i { background: #d4a017; }
+  .fresh-bar.red i { background: #c0392b; }
+  header.top .texty { align-self: center; }
 </style>
 </head>
 <body>
 <div class="shell">
   <header class="top">
-    <div>
-      <div class="brand">Austin CBD Atlas</div>
-      <div class="sub" id="sub"></div>
+    <div class="brand-lockup">
+      <a href="https://www.pky.com/" target="_blank" rel="noreferrer"><img class="brand-logo" src="parkway.svg" alt="Parkway"></a>
+      <div>
+        <div class="brand">Austin CBD</div>
+        <div class="sub" id="sub"></div>
+        <div class="fresh" id="fresh"></div>
+      </div>
     </div>
+    <button class="texty" id="openSales" type="button">Sale comps</button>
     <div class="stats" id="stats"></div>
   </header>
   <div class="stage">
@@ -219,7 +234,6 @@
         <div class="legend-actions">
           <button class="texty" id="fitCore" type="button">Downtown core</button>
           <button class="texty" id="fitAll" type="button">Fit all</button>
-          <button class="texty" id="openSales" type="button">Sale comps</button>
         </div>
       </div>
       <button class="texty listbtn" id="openList" type="button">Buildings</button>
@@ -351,7 +365,14 @@ function renderChrome(list) {
   const avail = list.reduce((s, b) => s + b.availSf, 0);
   let rentW = 0, rentSf = 0;
   for (const b of list) if (b.askingNnn != null) { rentW += b.askingNnn * b.sf; rentSf += b.sf; }
-  $("sub").textContent = "Class A office · " + PACK.asOf + " · CoStar checked " + PACK.costar;
+  $("sub").textContent = "Class A office · " + PACK.asOf;
+{
+  const start = new Date(PACK.costar);
+  const months = (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * (365.25 / 12));
+  const tone = months < 2.5 ? "green" : months < 3 ? "yellow" : "red";
+  const word = tone === "green" ? "Current" : tone === "yellow" ? "Due soon" : "Update due";
+  $("fresh").innerHTML = "<span>Last updated " + esc(PACK.costar) + '</span><span class="fresh-bar ' + tone + '" title="' + word + '. Green under 2.5 months, yellow until 3 months, red after 3."><i></i></span>';
+}
   $("stats").innerHTML = [
     [String(list.length), "Buildings"],
     [compactSf(total), "Inventory SF"],
@@ -648,4 +669,3 @@ map.once("load", () => {
 });
 </script>
 </body>
-</html>
