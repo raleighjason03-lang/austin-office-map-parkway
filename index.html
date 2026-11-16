@@ -647,7 +647,8 @@ function dealDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso + "T00:00:00");
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[d.getMonth()] + "-" + d.getFullYear();
 }
 function dealCell(d, key) {
   const v = d[key];
@@ -662,7 +663,7 @@ function dealCell(d, key) {
 }
 const DEAL_COLS = [
   ["name","Property",0],["address","Address",0],["city","City",0],["subtype","Type",0],["submarket","Submarket",0],
-  ["date","Sale date",1],["year","Year",1],["sf","SF",1],["occ","Occ.",1],["price","Sale price",1],["psf","$/SF",1],["cap","Cap rate",1],
+  ["date","Sale date",1],["year","Year built",1],["sf","SF",1],["occ","Occ.",1],["price","Sale price",1],["psf","$/SF",1],["cap","Cap rate",1],
   ["buyer","Buyer",0],["seller","Seller",0],["lender","Lender",0],["notes","Notes",0]
 ];
 const NUM_KEYS = { date:1, year:1, sf:1, occ:1, price:1, psf:1, cap:1 };
