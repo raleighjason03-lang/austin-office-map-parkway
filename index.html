@@ -67,6 +67,10 @@
   .chip.on, .texty.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .sort { display: flex; align-items: center; gap: 0.45rem; color: var(--muted); font-size: 0.75rem; }
   .sort select { height: 2.25rem; border: 1px solid var(--line); border-radius: 0.65rem; background: var(--bg); padding: 0 0.4rem; }
+  .ranges { display: flex; flex-direction: column; gap: 0.35rem; }
+  .range { display: grid; grid-template-columns: 5.4rem 1fr 1fr; gap: 0.3rem; align-items: center; color: var(--muted); font-size: 0.72rem; }
+  .range input { width: 100%; height: 2rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--bg); color: var(--ink); padding: 0 0.4rem; font: inherit; font-size: 0.8rem; }
+  .ranges .texty { min-height: 2rem; align-self: start; }
   .rows { overflow: auto; min-height: 0; }
   .row {
     display: grid; grid-template-columns: auto 1fr; gap: 0.65rem; width: 100%;
@@ -214,11 +218,19 @@
       <div class="tools">
         <div class="close-row">
           <label class="search" style="flex:1">
-            <input id="q" type="search" placeholder="Search name, tenant, owner" aria-label="Search buildings">
+            <input id="q" type="search" placeholder="Name, tenant, owner" aria-label="Search buildings">
           </label>
           <button class="iconbtn rail-x" id="closeList" type="button" aria-label="Close list">✕</button>
         </div>
         <div class="chips" id="chips"></div>
+        <div class="ranges">
+          <label class="range">Year built <input id="yearMin" inputmode="decimal" placeholder="From" aria-label="Year built from"><input id="yearMax" inputmode="decimal" placeholder="To" aria-label="Year built to"></label>
+          <label class="range">% leased <input id="leasedMin" inputmode="decimal" placeholder="From" aria-label="Percent leased from"><input id="leasedMax" inputmode="decimal" placeholder="To" aria-label="Percent leased to"></label>
+          <label class="range">Sublease SF <input id="subMin" inputmode="decimal" placeholder="From" aria-label="Sublease SF from"><input id="subMax" inputmode="decimal" placeholder="To" aria-label="Sublease SF to"></label>
+          <label class="range">Ask NNN <input id="rentMin" inputmode="decimal" placeholder="From" aria-label="Asking rent from"><input id="rentMax" inputmode="decimal" placeholder="To" aria-label="Asking rent to"></label>
+          <label class="range">Building SF <input id="sfMin" inputmode="decimal" placeholder="From" aria-label="Building SF from"><input id="sfMax" inputmode="decimal" placeholder="To" aria-label="Building SF to"></label>
+          <button class="texty" id="clearRanges" type="button">Clear ranges</button>
+        </div>
         <label class="sort">Sort
           <select id="sort" aria-label="Sort buildings">
             <option value="avail">Availability</option>
@@ -368,6 +380,17 @@ function formatFree(raw) {
   if (/^\d+(\.\d+)?$/.test(String(raw).trim())) return String(raw).trim() + " mo free";
   return raw;
 }
+function inRange(value, minId, maxId) {
+  const min = $(minId).value.trim();
+  const max = $(maxId).value.trim();
+  const lo = min === "" ? null : Number(min);
+  const hi = max === "" ? null : Number(max);
+  if (lo == null && hi == null) return true;
+  if (value == null || Number.isNaN(value)) return false;
+  if (lo != null && !Number.isNaN(lo) && value < lo) return false;
+  if (hi != null && !Number.isNaN(hi) && value > hi) return false;
+  return true;
+}
 function filtered() {
   const q = $("q").value.trim().toLowerCase();
   const list = buildings.filter((b) => {
@@ -380,6 +403,11 @@ function filtered() {
     if (band === "new" && !(b.yearSort && b.yearSort >= 2020)) return false;
     if (band === "legacy" && !(b.yearSort && b.yearSort < 2000)) return false;
     if (band === "full" && b.availSf > 0) return false;
+    if (!inRange(b.yearSort, "yearMin", "yearMax")) return false;
+    if (!inRange(b.leased == null ? null : b.leased * 100, "leasedMin", "leasedMax")) return false;
+    if (!inRange(b.subleaseSf, "subMin", "subMax")) return false;
+    if (!inRange(b.askingNnn, "rentMin", "rentMax")) return false;
+    if (!inRange(b.sf, "sfMin", "sfMax")) return false;
     return true;
   });
   const cmp = {
@@ -591,6 +619,11 @@ $("chips").onclick = (e) => {
 };
 $("q").oninput = refresh;
 $("sort").onchange = refresh;
+["yearMin","yearMax","leasedMin","leasedMax","subMin","subMax","rentMin","rentMax","sfMin","sfMax"].forEach((id) => { $(id).oninput = refresh; });
+$("clearRanges").onclick = () => {
+  ["yearMin","yearMax","leasedMin","leasedMax","subMin","subMax","rentMin","rentMax","sfMin","sfMax"].forEach((id) => { $(id).value = ""; });
+  refresh();
+};
 $("rows").onmouseover = (e) => {
   const row = e.target.closest("[data-id]");
   if (row) show(row.dataset.id);
